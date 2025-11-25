@@ -38,7 +38,7 @@ io.on('connection', (socket) => {
   socket.on('join-queue', (userData) => {
     // Prevent double queueing
     if (waitingUsers.includes(socket.id)) return;
-
+    
     console.log(`User ${socket.id} joined queue. Gender: ${userData.myGender}`);
 
     // If someone is waiting, match them!
@@ -48,7 +48,7 @@ io.on('connection', (socket) => {
       // Store the pairing
       activePairs[socket.id] = partnerId;
       activePairs[partnerId] = socket.id;
-
+      
       console.log(`Matching ${socket.id} with ${partnerId}`);
 
       // Notify both to start WebRTC
@@ -79,6 +79,14 @@ io.on('connection', (socket) => {
     }
   });
 
+  // ✨ NEW: Emoji relay
+  socket.on('emoji', (emoji) => {
+    const partnerId = activePairs[socket.id];
+    if (partnerId) {
+      io.to(partnerId).emit('emoji', emoji);
+    }
+  });
+
   // Disconnect handling
   const handleDisconnect = () => {
     // Remove from wait queue
@@ -91,6 +99,7 @@ io.on('connection', (socket) => {
       delete activePairs[partnerId];
       delete activePairs[socket.id];
     }
+
     console.log('User disconnected:', socket.id);
   };
 
